@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Long Tail · Music Map</title>
+<meta name="theme-color" content="#0c0e13">
+<style>
+:root {
+  --bg:  #0c0e13;
+  --bg2: #14171e;
+  --bg3: #1e2230;
+  --fg:  #e8ecf5;
+  --dim: #7a8599;
+  --mut: #3a3f52;
+  --gold:#f5c842;
+  --acc: #4a9eff;
+  --bar: 50px;
+  --pw:  310px;
+}
+:root[data-theme="light"] {
+  --bg:  #f5f4f0;
+  --bg2: #edece8;
+  --bg3: #e0deda;
+  --fg:  #1a1a2e;
+  --dim: #5a6070;
+  --mut: #bbbcc5;
+  --gold:#c89a00;
+  --acc: #0066cc;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--fg);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+#topbar{flex:0 0 var(--bar);display:flex;align-items:center;gap:4px;padding:0 10px;background:var(--bg2);border-bottom:1px solid var(--mut);z-index:10}
+#topbar h1{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--dim);margin-right:4px;white-space:nowrap}
+#topbar .back{font-size:12px;color:var(--dim);padding:5px 10px;border-radius:5px;border:1px solid var(--mut)}
+#topbar .back:hover{color:var(--fg);border-color:var(--fg)}
+#tab-map,#tab-explore{padding:5px 11px;border-radius:5px;font-size:13px;font-weight:500;color:var(--dim);transition:background .15s,color .15s}
+#tab-map.on,#tab-explore.on{background:var(--bg3);color:var(--fg)}
+#tab-map:hover:not(.on),#tab-explore:hover:not(.on){color:var(--fg)}
+#search{position:relative;flex:0 0 200px;margin-left:auto}
+#q{width:100%;padding:5px 10px;border-radius:6px;border:1px solid var(--mut);background:var(--bg3);color:var(--fg);font-size:13px;outline:none}
+#q:focus{border-color:var(--acc)}
+#qres,#bres{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--mut);border-radius:8px;list-style:none;overflow:hidden;z-index:50;display:none;max-height:280px;overflow-y:auto}
+#qres.open,#bres.open{display:block}
+#qres li,#bres li{display:flex;align-items:center;gap:7px;padding:7px 10px;font-size:13px;cursor:pointer}
+#qres li:hover,#bres li:hover,#qres li.sel,#bres li.sel{background:var(--bg3)}
+.sw{width:9px;height:9px;border-radius:50%;background:var(--mut);flex-shrink:0}
+li .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+li .tag{font-size:10px;color:var(--dim)}
+#themebtn{margin-left:8px;font-size:17px;color:var(--dim);padding:4px 6px;border-radius:4px}
+#themebtn:hover{color:var(--fg)}
+#main{flex:1 1 0;position:relative;min-height:0;overflow:hidden}
+#view-map,#view-explore{position:absolute;inset:0;display:none}
+#view-map.on,#view-explore.on{display:block}
+#mapsvg,#exsvg{width:100%;height:100%;display:block}
+#maphint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--dim);pointer-events:none;transition:opacity .4s;white-space:nowrap}
+#maphint.off{opacity:0}
+#crumbs{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:2px;z-index:5}
+#crumbs button{font-size:12px;color:var(--dim);padding:3px 7px;border-radius:4px}
+#crumbs button:hover{background:var(--bg3);color:var(--fg)}
+#crumbs .sep{color:var(--mut);font-size:11px;padding:0 2px}
+.node{cursor:pointer}
+.node.dim circle,.node.dim text{opacity:.15}
+.node.dim .pill rect,.node.dim .pill text{opacity:.15}
+.disc{fill:none;stroke-width:1.5}
+.fam-c{stroke-width:1;opacity:.4}
+.cl-c{stroke-width:1.5;opacity:.65}
+.sg-c{stroke-width:1;opacity:.4}
+.pill{pointer-events:none;display:none}
+.pill.on{display:block}
+.pill rect{fill:var(--bg);stroke:none;opacity:.88}
+.pill text{fill:var(--fg);font-size:13px;font-weight:600;text-anchor:middle;dominant-baseline:central}
+.pill.fam text{letter-spacing:.06em;font-size:14px}
+.pill.sg text{font-size:11px;font-weight:500}
+.bgd{opacity:.22}
+circle.ring{fill:none}
+text.lname{text-anchor:middle;dominant-baseline:middle;fill:var(--fg);font-size:10px;font-weight:500;pointer-events:none;opacity:0;transition:opacity .2s}
+text.lname.on{opacity:.9}
+text.ini{text-anchor:middle;dominant-baseline:central;fill:var(--fg);font-weight:700;opacity:.7;pointer-events:none}
+circle.hl{fill:none;stroke:var(--fg);stroke-width:2;opacity:.45;pointer-events:none}
+#exbar{position:absolute;top:10px;left:10px;right:calc(var(--pw) + 20px);display:flex;align-items:center;gap:6px;flex-wrap:wrap;z-index:5}
+#trail{display:flex;align-items:center;gap:2px;overflow:hidden}
+#trail button{font-size:12px;color:var(--dim);padding:3px 7px;border-radius:4px;white-space:nowrap}
+#trail button:hover{background:var(--bg3);color:var(--fg)}
+#trail .sep{color:var(--mut);font-size:11px}
+#exback{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--mut);color:var(--dim)}
+#exback:not(:disabled):hover{border-color:var(--fg);color:var(--fg)}
+#exback:disabled{opacity:.35;cursor:default}
+#blendbtn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--mut);color:var(--dim)}
+#blendbtn:hover,#blendbtn.on{border-color:var(--acc);color:var(--acc)}
+#bsearch{position:relative}
+#bq{padding:4px 10px;border-radius:6px;border:1px solid var(--mut);background:var(--bg3);color:var(--fg);font-size:12px;outline:none;width:170px}
+#bq:focus{border-color:var(--acc)}
+#bres{width:210px}
+#exnote{position:absolute;bottom:14px;left:10px;right:calc(var(--pw) + 20px);font-size:11px;color:var(--dim);pointer-events:none}
+#blendlist{background:var(--bg2);border:1px solid var(--mut);border-radius:8px;list-style:none;padding:4px 0}
+#blendlist li{font-size:12px;padding:5px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+#blendlist li:hover{background:var(--bg3)}
+#blendlist li .b{background:var(--acc);color:#fff;border-radius:3px;padding:1px 5px;font-size:10px}
+.xn{cursor:pointer}
+.xn circle.glow{fill:none;stroke:transparent;stroke-width:9}
+.xn circle.rg{fill:var(--bg2);stroke:var(--mut);stroke-width:2}
+.xn.ctr circle.rg{stroke-width:2.5}
+.xn.sel circle.glow{stroke:#fff;stroke-opacity:.28}
+.xn.hop2{opacity:.75}
+.xn text.nm{text-anchor:middle;fill:var(--fg);font-weight:500}
+.xn text.sub{text-anchor:middle;fill:var(--dim)}
+.xn text.star{fill:var(--gold);pointer-events:none}
+.xn text.ini{fill:var(--dim)}
+line.spoke{stroke:var(--dim);stroke-width:1.3}
+line.colink{stroke:var(--dim);stroke-width:1;opacity:.3}
+line.spoke.A,line.spoke.B{stroke:var(--acc)}
+line.h2{stroke:var(--dim);opacity:.4}
+#panel{position:absolute;right:0;top:0;bottom:0;width:var(--pw);background:var(--bg2);border-left:1px solid var(--mut);overflow-y:auto;z-index:20}
+#panel .x{position:absolute;top:10px;right:10px;font-size:20px;color:var(--dim);padding:4px 8px;border-radius:4px;z-index:1}
+#panel .x:hover{color:var(--fg)}
+#panel .cover{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+#panel .cover.ph{display:flex;align-items:center;justify-content:center;background:var(--bg3);aspect-ratio:1;font-size:52px;color:var(--mut)}
+#panel .body{padding:14px}
+#panel h2{font-size:16px;font-weight:700;margin-bottom:5px;line-height:1.3}
+#panel .crumb{font-size:12px;color:var(--dim);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+#panel .crumb i{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+#panel dl{font-size:13px}
+#panel dt{color:var(--dim);font-size:11px;margin-top:6px}
+#panel dd{margin:1px 0 0 0}
+#panel .rest{padding:0 14px 14px}
+#panel .why{background:var(--bg3);border-radius:7px;padding:10px 12px;font-size:12px;color:var(--dim);margin-bottom:10px}
+#panel .btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+#panel .btn{padding:6px 12px;border-radius:6px;border:1px solid var(--mut);font-size:12px;font-weight:500;color:var(--fg);display:inline-block}
+#panel .btn:hover{border-color:var(--fg);background:var(--bg3)}
+#panel .btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+#panel .btn.pri:hover{opacity:.9}
+#panel ul.blendlist{list-style:none;margin-top:8px}
+#panel ul.blendlist li{font-size:12.5px;padding:5px 0;cursor:pointer;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--mut)}
+#panel ul.blendlist li:hover .n{color:var(--acc)}
+#panel ul.blendlist li .b{background:var(--acc);color:#fff;border-radius:3px;padding:1px 5px;font-size:10px}
+#panel .kicker{font-size:11px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--dim);background:var(--bg);z-index:100}
+#loading.err{color:#e55}
+@media(max-width:720px){
+  :root{--pw:0px}
+  #exbar,#exnote{right:10px}
+  #panel{width:100%;top:auto;bottom:0;height:52%;border-left:none;border-top:1px solid var(--mut)}
+}
+</style>
+</head>
+<body>
+<nav id="topbar">
+  <h1>Music Map</h1>
+  <a class="back" href="index.html">← Main</a>
+  <a id="tab-map" class="on" href="#map">Map</a>
+  <a id="tab-explore" href="#explore">Explore</a>
+  <div id="search">
+    <input id="q" type="search" placeholder="Search artist…" autocomplete="off" spellcheck="false">
+    <ul id="qres"></ul>
+  </div>
+  <button id="themebtn" aria-label="Toggle light/dark">◐</button>
+</nav>
+<div id="main">
+  <div id="view-map" class="on">
+    <svg id="mapsvg"></svg>
+    <p id="maphint">Click a circle to zoom in · click empty space to zoom out</p>
+    <nav id="crumbs"></nav>
+  </div>
+  <div id="view-explore">
+    <svg id="exsvg"></svg>
+    <div id="exbar">
+      <button id="exback" disabled>← Back</button>
+      <div id="trail"></div>
+      <button id="blendbtn">Blend</button>
+      <div id="bsearch" hidden>
+        <input id="bq" type="search" placeholder="Blend with…" autocomplete="off" spellcheck="false">
+        <ul id="bres"></ul>
+      </div>
+    </div>
+    <ul id="blendlist" hidden></ul>
+    <div id="exnote"></div>
+  </div>
+  <div id="panel" hidden></div>
+  <div id="loading">Loading map…</div>
+</div>
+<script>window._MM_MAP = 'data/map2.json'; window._MM_GRAPH = 'data/graph2.json';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" crossorigin="anonymous"></script>
+<script src="common.js"></script>
+<script src="map.js"></script>
+<script src="explore.js"></script>
+<script src="router.js"></script>
+</body>
+</html>

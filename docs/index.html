@@ -37,6 +37,8 @@ button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 /* ---- Top bar ---- */
 #topbar{flex:0 0 var(--bar);display:flex;align-items:center;gap:4px;padding:0 10px;background:var(--bg2);border-bottom:1px solid var(--mut);z-index:10}
 #topbar h1{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--dim);margin-right:4px;white-space:nowrap}
+#topbar .tail{font-size:12px;color:var(--dim);padding:5px 10px;border-radius:5px;border:1px solid var(--mut)}
+#topbar .tail:hover{color:var(--fg);border-color:var(--fg)}
 #tab-map,#tab-explore{padding:5px 11px;border-radius:5px;font-size:13px;font-weight:500;color:var(--dim);transition:background .15s,color .15s}
 #tab-map.on,#tab-explore.on{background:var(--bg3);color:var(--fg)}
 #tab-map:hover:not(.on),#tab-explore:hover:not(.on){color:var(--fg)}
@@ -170,6 +172,7 @@ line.h2{stroke:var(--dim);opacity:.4}
   <h1>Music Map</h1>
   <a id="tab-map" class="on" href="#map">Map</a>
   <a id="tab-explore" href="#explore">Explore</a>
+  <a class="tail" href="longtail.html">Long Tail →</a>
   <div id="search">
     <input id="q" type="search" placeholder="Search artist…" autocomplete="off" spellcheck="false">
     <ul id="qres"></ul>
