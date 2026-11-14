@@ -42,7 +42,8 @@ var MM = (function () {
   // ---------- data
   MM.nodes = []; MM.byNorm = new Map(); MM.artists = new Map(); MM.out = []; MM.inn = []; MM.recs = {}; MM.fams = [];
   MM.load = function () {
-    return Promise.all([fetch('data/map.json').then(chk), fetch('data/graph.json').then(chk)]).then(function (r) {
+    var v = '?v=' + (window._mmv || '1');
+    return Promise.all([fetch('data/map.json' + v, {cache: 'no-cache'}).then(chk), fetch('data/graph.json' + v, {cache: 'no-cache'}).then(chk)]).then(function (r) {
       var map = r[0], g = r[1];
       MM.fams = map.fams;
       map.fams.forEach(function (f) {
